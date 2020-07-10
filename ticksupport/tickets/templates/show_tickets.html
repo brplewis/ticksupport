@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">View Ticket</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+      <div class="btn-group mr-2">
+        <form action="/edit_ticket/{{ticket.id}}" method="post">
+          <button type="submit" class="btn btn-sm btn-outline-secondary" name="updateBtn" value="send">Edit</button>
+        </form>
+        <form action="/update_ticket/{{ticket.id}}" method="post">
+        <button type="submit" class="btn btn-sm btn-outline-secondary" name="updateBtn" value="send">Update</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<div class="table-responsive">
+  <table class="table table-striped table-sm">
+    <thead>
+      <tr>
+        <th>{{title}}</th>
+      </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Client: {{ ticket.client }}</td>
+        </tr>
+        <tr>
+          <td>Issue: {{ ticket.issue }}</td>
+        </tr>
+        <tr>
+          <td>Status: {{ ticket.status }}</td>
+        </tr>
+        <tr>
+          <td>Assigned: {{ ticket.assigned }}</td>
+        </tr>
+        <tr>
+          <td>Deadline: {{ ticket.deadline }}</td>
+        </tr>
+        <tr>
+          <td>Created: {{ ticket.created }}</td>
+        </tr>
+        <tr>
+          <td>Last Updated: {{ ticket.last_update }}</td>
+        </tr>
+        <tr>
+          <td>Log:</td>
+        </tr>
+      </tbody>
+  </table>
+</div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12 ml-sm-auto col-lg-12 px-md-4" style="height:400px;width:120px;border:1px solid #ccc; overflow:auto;">
+        {{ticket.log }}
+      </div>
+    </div>
+  </div>
+
+
+{% endblock %}
