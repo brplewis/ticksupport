@@ -3,28 +3,70 @@
 {% block content %}
 <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
   <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Dashboard | {{show_selected}}</h1>
+    <h1 class="h2">Dashboard | {{header}}</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-      <div class="btn-group mr-2">
+      <div class="btn-group mr-3">
         <form action="/show_ticket/">
           <input type="text" placeholder="View Ticket.." name="ticket">
         </form>
         <form action="/" method="post">
-          <select  type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" name="show_select" id="show_select">
-            {% if show_selected == 'All' %}
+
+          <select  type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" name="show_clients" id="show_clients">
+            {% if show_clients== 'All Clients' %}
+              <option value="All Clients"> {{show_clients}}</option>
+              {% for client in clients %}
+                <option value={{client}}>{{client}}</option>
+              {% endfor %}
+            {% else %}
+              <option value={{show_clients}}>{{show_clients}}</option>
+            {% for client in clients %}
+              <option value=client>client</option>
+            {% endfor %}
+
+            {% endif %}
+          </select>
+
+
+          <select  type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" name="show_status" id="show_status">
+            {% if show_status == 'All' %}
               <option value="All">Show All</option>
               <option value="Open">Show Open</option>
               <option value="Closed">Show Closed</option>
-            {% elif show_selected == 'Open' %}
+            {% elif show_status == 'Open' %}
               <option value="Open">Show Open</option>
               <option value="Closed">Show Closed</option>
               <option value="All">Show All</option>
-            {% elif show_selected == 'Closed' %}
+            {% elif show_status == 'Closed' %}
                 <option value="Closed">Show Closed</option>
                 <option value="All">Show All</option>
                 <option value="Open">Show Open</option>
             {% endif %}
           </select>
+
+          <select  type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" name="show_assigned" id="show_assigned">
+            {% if show_assigned == 'All' %}
+              <option value="All">All Users</option>
+              <option value="Bob">Bob</option>
+              <option value="Toby">Toby</option>
+              <option value="Beth">Beth</option>
+            {% elif show_assigned == 'Bob' %}
+              <option value="Bob">Bob</option>
+              <option value="Toby">Toby</option>
+              <option value="Beth">Beth</option>
+              <option value="All">All Users</option>
+            {% elif show_assigned == 'Toby' %}
+              <option value="Toby">Toby</option>
+              <option value="Beth">Beth</option>
+              <option value="All">All Users</option>
+              <option value="Bob">Bob</option>
+            {% elif show_assigned == 'Beth' %}
+                <option value="Beth">Beth</option>
+                <option value="All">All Users</option>
+                <option value="Bob">Bob</option>
+                <option value="Toby">Toby</option>
+            {% endif %}
+          </select>
+
           <button type="submit" class="btn btn-sm btn-outline-secondary" name="updateBtn" value="send">Update</button>
         </form>
       </div>

@@ -64,3 +64,22 @@ class support_ticket(db.Model):
 
     def __repr__(self):
         return '<suppoer_ticket {}>'.format(self.id)
+
+class clients(db.Model):
+    """Data model for user accounts."""
+
+    __tablename__ = 'clients'
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        auto_increment=True
+    )
+    client = db.Column(
+        db.String(64),
+        index=False,
+        unique=True,
+        nullable=False
+    )
+
+    def __repr__(self):
+        return '{}'.format(self.client)

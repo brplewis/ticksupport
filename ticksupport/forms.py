@@ -25,3 +25,9 @@ class AddTicket(FlaskForm):
         DataRequired()])
 
     submit = SubmitField('Submit')
+
+class AddClient(FlaskForm):
+    """Contact form."""
+    client = StringField('Client', [
+        DataRequired()])
+    submit = SubmitField('Submit')
