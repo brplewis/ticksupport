@@ -86,6 +86,7 @@ def show_ticket():
 def edit_ticket(id):
 
     ticket = support_ticket.query.filter_by(id=id).first()
+    print(ticket)
 
     form = forms.AddTicket()
     if request.method == 'POST':
@@ -93,6 +94,7 @@ def edit_ticket(id):
             client=request.form.get('client'),
             issue=request.form.get('issue'),
             status=request.form.get('status'),
+            urgency=request.form.get('urgency'),
             assigned=request.form.get('assigned'),
             log=request.form.get('log'),
             deadline=request.form.get('deadline'),
@@ -102,6 +104,7 @@ def edit_ticket(id):
             ticket.client = client
             ticket.issue = issue
             ticket.status = status
+            ticket.urgency = urgency
             ticket.assigned = assigned
             ticket.log = log
             ticket.last_updated = last_update
@@ -113,6 +116,7 @@ def edit_ticket(id):
     form.client.data = ticket.client
     form.issue.data = ticket.issue
     form.status.data = ticket.status
+    form.urgency.data = ticket.urgency
     form.assigned.data = ticket.assigned
     form.deadline.data = ticket.deadline
     form.log.data = ticket.log

@@ -12,14 +12,14 @@ class support_ticket(db.Model):
         auto_increment=True
     )
     client = db.Column(
-        db.String(64),
+        db.Text,
         index=False,
         unique=False,
         nullable=False
     )
     issue = db.Column(
         db.String(80),
-        index=True,
+        index=False,
         unique=False,
         nullable=False
     )
@@ -42,7 +42,7 @@ class support_ticket(db.Model):
         nullable=False
     )
     deadline = db.Column(
-        db.Text,
+        db.DateTime,
         index=False,
         unique=False,
         nullable=True
@@ -75,7 +75,7 @@ class support_ticket(db.Model):
     )
 
     def __repr__(self):
-        return '<suppoer_ticket {}>'.format(self.id)
+        return '<support_ticket {}>'.format(self.id)
 
 class clients(db.Model):
     """Data model for user accounts."""
@@ -94,4 +94,4 @@ class clients(db.Model):
     )
 
     def __repr__(self):
-        return '{}'.format(self.client)
+        return '{}'.format(self.id)

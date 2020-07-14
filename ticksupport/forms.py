@@ -1,19 +1,21 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextField, SubmitField, SelectField, TextAreaField
+from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from wtforms.fields.html5 import DateField
 from wtforms.widgets import TextArea
 from wtforms.validators import DataRequired, Length
 from .models import db, support_ticket, clients
 
-all_clients = []
-
-for client in clients.query.all():
-    all_clients.append((client, client))
+def all_clients():
+    return clients.query
 
 class AddTicket(FlaskForm):
     """Contact form."""
-    client = SelectField('Client', [DataRequired()],
-                        choices=all_clients)
+    client = QuerySelectField(
+        u'Client',
+        query_factory= all_clients, get_pk=lambda x: x.client, get_label='client',
+        allow_blank=False
+    )
     issue = StringField('Issue', [
         DataRequired()])
     log = TextAreaField('Ticket Log', [
@@ -28,7 +30,7 @@ class AddTicket(FlaskForm):
                                  ('Toby', 'Toby'),
                                  ('Beth', 'Beth')])
     deadline = DateField('Deadline', [
-        DataRequired()], format='%d-%m-%Y')
+        DataRequired()], format='%Y-%m-%d')
     urgency = SelectField('Urgency', [DataRequired()],
                         choices=[('High', 'High'),
                                  ('Medium', 'Medium'),

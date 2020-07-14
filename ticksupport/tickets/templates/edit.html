@@ -66,6 +66,19 @@
     </div>
     <div class="row">
       <div class="col-sm-4">
+        <div class="form-field">{{ form.urgency.label }} {{ form.urgency }}
+          {% if form.urgency.errors %}
+          <ul class="errors">
+            {% for error in form.urgency.errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-4">
         <div class="form-field">{{ form.deadline.label }} {{ form.deadline }}
           {% if form.deadline.errors %}
           <ul class="errors">
