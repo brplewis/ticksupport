@@ -58,7 +58,10 @@ def add():
                 log=request.form.get('log'),
                 deadline=request.form.get('deadline'),
                 created=datetime.now(),
-                last_update=datetime.now()
+                last_update=datetime.now(),
+                urgency=request.form.get('urgency'),
+                created_by='Bob' #Replace with user_name varible after user function added
+
             )
             db.session.add(new_ticket)  # Adds new User record to database
             db.session.commit()  # Commits all changes

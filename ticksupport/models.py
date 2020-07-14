@@ -61,6 +61,18 @@ class support_ticket(db.Model):
         unique=False,
         nullable=False
     )
+    urgency = db.Column(
+        db.Text,
+        index=False,
+        unique=False,
+        nullable=False
+    )
+    created_by = db.Column(
+        db.Text,
+        index=False,
+        unique=False,
+        nullable=False
+    )
 
     def __repr__(self):
         return '<suppoer_ticket {}>'.format(self.id)
