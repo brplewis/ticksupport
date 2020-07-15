@@ -22,21 +22,50 @@ def dashboard():
 
         assigned = request.form.get('show_assigned')
         status = request.form.get('show_status')
+        client_select = request.form.get("show_clients")
+        urgency_filter = ""
+        filter_code = 0
+        search_filter = ""
 
-        if assigned == 'All' and status == 'All':
+        if assigned == 'All' and status == 'All' and client_select == 'All Clients':
             return render_template('dashboard.html',all_tickets=support_ticket.query.all(),
-                                   title="Ticket Support", header=f"{assigned} : {status}", show_status="All", show_assigned="All",
-                                   description="Web interface for support tickets")
-        elif status == 'All':
-            return render_template('dashboard.html',all_tickets=support_ticket.query.filter_by(assigned=assigned).all(),
-                                   title="Ticket Support",
-                                   description="Web interface for support tickets", header=f"{assigned} : {status}", show_status=f"{status}", show_assigned=f"{assigned}")
-        elif assigned == 'All':
-            return render_template('dashboard.html',all_tickets=support_ticket.query.filter_by(status=status).all(),
-                                   title="Ticket Support",
-                                   description="Web interface for support tickets", header=f"{assigned} : {status}", show_status=f"{status}", show_assigned=f"{assigned}")
-        else:
-            return render_template('dashboard.html',all_tickets=support_ticket.query.filter_by(status=status, assigned=assigned).all(),
+                                    clients=clients.query.all(), title="Ticket Support", header=f"{assigned} : {status}", show_status="All", show_assigned="All",
+                                   description="Web interface for support tickets",  show_clients=client_select)
+
+        print("assigned:  " + assigned +'|')
+        print("status:  " + status+'|')
+        print("client:  " + client_select+'|')
+
+        if assigned == 'All':
+            filter_code+= 1
+
+        if status == 'All':
+            filter_code+= 3
+
+        if client_select == 'All Clients':
+            filter_code+= 5
+
+        print(filter_code)
+
+
+        if filter_code == 1:
+            search_filter = support_ticket.query.filter_by(client=client_select, status=status).all()
+        elif filter_code == 3:
+            search_filter = support_ticket.query.filter_by(client=client_select, assigned=assigned).all()
+        elif filter_code == 4:
+            search_filter = support_ticket.query.filter_by(client=client_select).all()
+        elif filter_code == 5:
+            search_filter = support_ticket.query.filter_by(assigned=assigned, status=status).all()
+        elif filter_code == 6:
+            search_filter = support_ticket.query.filter_by(status=status).all()
+        elif filter_code == 8:
+            search_filter = support_ticket.query.filter_by(assigned=assigned).all()
+        elif filter_code == 9:
+            search_filter = support_ticket.query.all()
+
+        print(search_filter)
+
+        return render_template('dashboard.html', all_tickets=search_filter,  clients=clients.query.all(),  show_clients=client_select,
                                    title="Ticket Support",
                                    description="Web interface for support tickets", header=f"{assigned} : {status}", show_status=f"{status}", show_assigned=f"{assigned}")
 
@@ -120,9 +149,10 @@ def edit_ticket(id):
     form.assigned.data = ticket.assigned
     form.deadline.data = ticket.deadline
     form.log.data = ticket.log
+    #form.process()
 
     return render_template('edit.html',
-                            title="Edit Ticket", form=form, id=id)
+                            title="Edit Ticket", form=form, id=id, client_choice=ticket.client)
 
 
 

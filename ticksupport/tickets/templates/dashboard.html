@@ -15,12 +15,14 @@
             {% if show_clients== 'All Clients' %}
               <option value="All Clients"> {{show_clients}}</option>
               {% for client in clients %}
-                <option value={{client}}>{{client}}</option>
+              {% print client %}
+                <option value="{{client}}">{{client}}</option>
               {% endfor %}
             {% else %}
               <option value={{show_clients}}>{{show_clients}}</option>
+              <option value='All Clients'>All Clients</option>
             {% for client in clients %}
-              <option value=client>client</option>
+              <option value="{{client}}">{{client}}</option>
             {% endfor %}
 
             {% endif %}

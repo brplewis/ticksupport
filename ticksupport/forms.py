@@ -6,16 +6,18 @@ from wtforms.widgets import TextArea
 from wtforms.validators import DataRequired, Length
 from .models import db, support_ticket, clients
 
-def all_clients():
-    return clients.query
+
 
 class AddTicket(FlaskForm):
     """Contact form."""
-    client = QuerySelectField(
+    """client = QuerySelectField(
         u'Client',
         query_factory= all_clients, get_pk=lambda x: x.client, get_label='client',
         allow_blank=False
-    )
+    )"""
+
+    client = SelectField('Client', [DataRequired()],
+                        choices=[(client.client, client.client) for client in clients.query.all()])
     issue = StringField('Issue', [
         DataRequired()])
     log = TextAreaField('Ticket Log', [

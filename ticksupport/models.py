@@ -94,4 +94,7 @@ class clients(db.Model):
     )
 
     def __repr__(self):
-        return '{}'.format(self.id)
+        return '{}'.format(self.client)
+
+    def __str__(self):
+        return '{}'.format(self.client)
