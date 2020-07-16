@@ -35,7 +35,6 @@ class AddTicket(FlaskForm):
         DataRequired()], format='%Y-%m-%d')
     urgency = SelectField('Urgency', [DataRequired()],
                         choices=[('High', 'High'),
-                                 ('Medium', 'Medium'),
                                  ('Low', 'Low')])
 
     submit = SubmitField('Submit')

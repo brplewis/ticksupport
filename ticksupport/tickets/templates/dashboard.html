@@ -101,7 +101,11 @@
             <td> {{ ticket.status }} </td>
             <td> {{ ticket.assigned }} </td>
             <td> {{ ticket.urgency }} </td>
-            <td> {{ ticket.deadline }} </td>
+            {% if ticket.deadline < now and ticket.status == 'Open' %}
+              <td style="color:white; background-color:red; opacity:0.6;"> {{ ticket.deadline }}</td>
+            {% else %}
+              <td>{{ ticket.deadline }}</td>
+            {% endif %}
             <td> {{ ticket.last_update }} </td>
           </tr>
         {% endfor %}
