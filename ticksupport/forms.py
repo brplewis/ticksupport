@@ -18,6 +18,8 @@ class AddTicket(FlaskForm):
 
     client = SelectField('Client', [DataRequired()],
                         choices=[(client.client, client.client) for client in clients.query.all()])
+    client_name = StringField('Client Name')
+    suite = StringField('Suite / PC')
     issue = StringField('Issue', [
         DataRequired()])
     log = TextAreaField('Ticket Log', [

@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, redirect, url_for, Blueprint, make_response
 from flask import current_app as app
 from .. import forms
-from datetime import datetime
+from datetime import datetime, date
 from ..models import db, support_ticket, clients
 
 USER = "Bob"
@@ -60,7 +60,7 @@ def dashboard():
         if assigned == 'All' and status == 'All' and client_select == 'All Clients':
             return render_template('dashboard.html',all_tickets=support_ticket.query.order_by(support_ticket.deadline.asc()).order_by(support_ticket.urgency.asc()).all(),
                                     clients=clients.query.all(), title="Ticket Support", header=f"All", show_status="All", show_assigned="All",
-                                   description="Web interface for support tickets",  show_clients=client_select, now=datetime.now())
+                                   description="Web interface for support tickets",  show_clients=client_select, now=date.today())
 
         print("assigned:  " + assigned +'|')
         print("status:  " + status+'|')
@@ -98,12 +98,12 @@ def dashboard():
         print(search_filter)
 
         return render_template('dashboard.html', all_tickets=search_filter,  clients=clients.query.all(),  show_clients=client_select,
-                                   title="Ticket Support", now=datetime.now(),
+                                   title="Ticket Support", now=date.today(),
                                    description="Web interface for support tickets", header=f"{assigned} : {status}", show_status=f"{status}", show_assigned=f"{assigned}")
 
 
     return render_template('dashboard.html',all_tickets=support_ticket.query.filter_by(status='Open').order_by(support_ticket.deadline.asc()).order_by(support_ticket.urgency.asc()).all(),
-                           clients=clients.query.all(), title="Ticket Support", now=datetime.now(),
+                           clients=clients.query.all(), title="Ticket Support", now=date.today(),
                            description="Web interface for support tickets", header='All Open', show_clients='All Clients', show_status="Open", show_assigned="All")
 
 @tickets_bp.route('/add', methods=['POST', 'GET'])
@@ -113,6 +113,8 @@ def add():
         if form.validate_on_submit():
             new_ticket = support_ticket(
                 client=request.form.get('client'),
+                client_name=request.form.get('client_name'),
+                suite=request.form.get('suite'),
                 issue=request.form.get('issue'),
                 status=request.form.get('status'),
                 assigned=request.form.get('assigned'),
@@ -153,6 +155,8 @@ def edit_ticket(id):
     if request.method == 'POST':
         if form.validate_on_submit():
             client=request.form.get('client'),
+            client_name = request.form.get('client_name')
+            suite=request.form.get('suite')
             issue=request.form.get('issue'),
             status=request.form.get('status'),
             urgency=request.form.get('urgency'),
@@ -163,6 +167,8 @@ def edit_ticket(id):
 
 
             ticket.client = client
+            ticket.client_name = client_name
+            ticket.suite = suite
             ticket.issue = issue
             ticket.status = status
             ticket.urgency = urgency
@@ -176,6 +182,8 @@ def edit_ticket(id):
             return redirect(f"/show_ticket/?ticket={ticket.id}")
 
     form.client.data = ticket.client
+    form.client_name.data = ticket.client_name
+    form.suite.data = ticket.suite
     form.issue.data = ticket.issue
     form.status.data = ticket.status
     form.urgency.data = ticket.urgency
@@ -206,3 +214,43 @@ def add_client():
 
     return render_template('add_client.html',
                             title="Add Client", form=form, all_clients=clients.query.all())
+
+
+@tickets_bp.route('/update_ticket/<id>', methods=['POST', 'GET'])
+def update_ticket(id):
+
+    ticket = support_ticket.query.filter_by(id=id).first()
+    print(ticket)
+
+    form = forms.AddTicket()
+    if request.method == 'POST':
+        print("POSTED")
+        if form.validate_on_submit():
+            print("SUBMITTED")
+            status=request.form.get('status'),
+            assigned=request.form.get('assigned'),
+            urgency=request.form.get('urgency'),
+            log=log_input(request.form.get('log'), previous_message=ticket.log),
+            deadline=request.form.get('deadline'),
+            last_update=datetime.now()
+
+
+            ticket.status = status
+            ticket.urgency = urgency
+            ticket.assigned = assigned
+            ticket.deadline = deadline
+            ticket.log = ticket.log + log
+            ticket.last_update = last_update
+
+            db.session.commit()  # Commits all changes
+
+            return redirect(f"/show_ticket/?ticket={ticket.id}")
+
+    form.status.data = ticket.status
+    form.urgency.data = ticket.urgency
+    form.assigned.data = ticket.assigned
+    form.deadline.data = ticket.deadline
+
+
+    return render_template('update.html',
+                            title=f"Ticket {ticket.id}", form=form, id=id, client_choice=ticket.client, ticket=ticket)

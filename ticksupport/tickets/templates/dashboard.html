@@ -83,7 +83,9 @@
       <thead>
         <tr>
           <th>Ticket</th>
-          <th>Client</th>
+          <th>Production / Department </th>
+          <th>Client Name</th>
+          <th>Suite / PC</th>
           <th>Issue</th>
           <th>Status</th>
           <th>Assigned</th>
@@ -97,6 +99,8 @@
           <tr>
             <td> <a href="show_ticket/?ticket={{ticket.id}}"> {{ ticket.id }} </a> </td>
             <td> {{ ticket.client }} </td>
+            <td> {{ ticket.client_name }} </td>
+            <td> {{ ticket.suite }}</td>
             <td> {{ ticket.issue }} </td>
             <td> {{ ticket.status }} </td>
             <td> {{ ticket.assigned }} </td>

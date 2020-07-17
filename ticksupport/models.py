@@ -17,6 +17,18 @@ class support_ticket(db.Model):
         unique=False,
         nullable=False
     )
+    client_name = db.Column(
+        db.Text,
+        index=False,
+        unique=False,
+        nullable=True
+    )
+    suite = db.Column(
+        db.Text,
+        index=False,
+        unique=False,
+        nullable=False
+    )
     issue = db.Column(
         db.String(80),
         index=False,
@@ -42,7 +54,7 @@ class support_ticket(db.Model):
         nullable=False
     )
     deadline = db.Column(
-        db.DateTime,
+        db.Date,
         index=False,
         unique=False,
         nullable=True
