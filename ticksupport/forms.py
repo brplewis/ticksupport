@@ -41,6 +41,27 @@ class AddTicket(FlaskForm):
 
     submit = SubmitField('Submit')
 
+class UpdateTicket(FlaskForm):
+    log = TextAreaField('Ticket Log', [
+        DataRequired(),
+        Length(min=4, message=('Your message is too short.'))])
+    status = SelectField('Status', [DataRequired()],
+                        choices=[('Open', 'Open'),
+                                 ('Closed', 'Closed'),
+                                 ('Awaiting Action', 'Awaiting Action')])
+    assigned = SelectField('Assign', [DataRequired()],
+                        choices=[('Bob', 'Bob'),
+                                 ('Toby', 'Toby'),
+                                 ('Beth', 'Beth')])
+    deadline = DateField('Deadline', [
+        DataRequired()], format='%Y-%m-%d')
+    urgency = SelectField('Urgency', [DataRequired()],
+                        choices=[('High', 'High'),
+                                 ('Low', 'Low')])
+
+    submit = SubmitField('Submit')
+
+
 class AddClient(FlaskForm):
     """Contact form."""
     client = StringField('Client', [

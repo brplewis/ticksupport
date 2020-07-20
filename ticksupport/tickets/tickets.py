@@ -39,6 +39,8 @@ def log_input(text_input, previous_message=None):
 
     else:
         log_entry = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | {text_input}\n"
+
+
     return log_entry
 
 
@@ -222,7 +224,7 @@ def update_ticket(id):
     ticket = support_ticket.query.filter_by(id=id).first()
     print(ticket)
 
-    form = forms.AddTicket()
+    form = forms.UpdateTicket()
     if request.method == 'POST':
         print("POSTED")
         if form.validate_on_submit():
@@ -230,16 +232,17 @@ def update_ticket(id):
             status=request.form.get('status'),
             assigned=request.form.get('assigned'),
             urgency=request.form.get('urgency'),
-            log=log_input(request.form.get('log'), previous_message=ticket.log),
+            log=log_input(request.form.get('log')),
             deadline=request.form.get('deadline'),
             last_update=datetime.now()
+            print(type(log))
 
 
             ticket.status = status
             ticket.urgency = urgency
             ticket.assigned = assigned
             ticket.deadline = deadline
-            ticket.log = ticket.log + log
+            ticket.log = ticket.log + log[0]
             ticket.last_update = last_update
 
             db.session.commit()  # Commits all changes
