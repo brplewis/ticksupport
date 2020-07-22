@@ -66,7 +66,11 @@
 
   <div class="container-fluid">
     <div class="row">
-         <textarea class="col-md-12 ml-sm-auto col-lg-12 px-md-4" style="height:400px;width:120px;border:1px solid #ccc; overflow:auto;">{{ticket.log}}</textarea>
+         <textarea class="col-md-12 ml-sm-auto col-lg-12 px-md-4" style="height:400px;width:120px;border:1px solid #ccc; overflow:auto;">
+           {% for message in ticket_log %}
+            {{message[0]}} {{message[1]}}
+           {% endfor %}
+         </textarea>
 
     </div>
   </div>

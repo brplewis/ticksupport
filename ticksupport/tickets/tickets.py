@@ -15,7 +15,7 @@ tickets_bp = Blueprint(
 )
 
 
-def log_input(text_input, previous_message=None):
+"""def log_input(text_input, previous_message=None):
     print(previous_message)
     log_split = []
 
@@ -41,7 +41,80 @@ def log_input(text_input, previous_message=None):
         log_entry = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | {text_input}\n"
 
 
-    return log_entry
+    return log_entry"""
+
+def log_input(text_input, ticket=None, entry_type=0):
+    # except a text input and create a time stamp and user # NOTE
+    # make a tuple of the two and either append it onto a list
+    # Or replace the edited entry with new edit and updated time stamp
+
+    # If new entry
+    if entry_type == 0:
+        # New log
+        ticket_log = []
+        time_stamp = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
+        full_entry = [time_stamp, text_input + '\n']
+
+    elif entry_type == 1:
+        # If entry is an update
+        ticket_log = eval(ticket)
+        time_stamp = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
+        full_entry = [time_stamp, text_input + '\n']
+
+    elif entry_type == 2:
+        # If entry type is an edit
+        ticket_log = eval(ticket)
+
+        original_log = []
+
+        # Split text into lines
+        all_messages = []
+
+
+        all_lines = text_input.split('\n')
+
+        # Split out all messages only
+        for line in all_lines:
+            try:
+                all_messages.append(line.split('|')[1])
+            except IndexError:
+                pass
+
+        # Get message only
+        for log in ticket_log:
+            original_log.append(log[1])
+
+        edits = []
+
+        # Find edits and save location
+        for i in range(len(original_log)):
+            if original_log[i].lstrip() != all_messages[i].lstrip():
+                print(original_log[i])
+                print(all_messages[i])
+                edits.append(i)
+
+
+        for i in edits:
+            ticket_log[i][1] = all_messages[i]
+            if '## EDITED' in ticket_log[i][0]:
+                original_timestamp = ticket_log[i][0].split('## EDITED')[0]
+                new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
+            else:
+                original_timestamp = ticket_log[i][0].split('|')[0]
+                new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
+
+            ticket_log[i][0] = original_timestamp + new_timestamp
+
+        return ticket_log
+
+
+    ticket_log.append(full_entry)
+
+    return ticket_log
+
+
+
+
 
 
 @tickets_bp.route('/', methods=['POST', 'GET'])
@@ -120,7 +193,7 @@ def add():
                 issue=request.form.get('issue'),
                 status=request.form.get('status'),
                 assigned=request.form.get('assigned'),
-                log=log_input(request.form.get('log')),
+                log=str(log_input(request.form.get('log'), entry_type=0)),
                 deadline=request.form.get('deadline'),
                 created=datetime.now(),
                 last_update=datetime.now(),
@@ -141,11 +214,12 @@ def add():
 @tickets_bp.route('/show_ticket/', methods=['POST', 'GET'])
 def show_ticket():
     id = request.args['ticket']
+    ticket = support_ticket.query.filter_by(id=id).first()
+    log = eval(ticket.log)
     return render_template(
         'show_tickets.html',
-        ticket=support_ticket.query.filter_by(id=id).first(),
-        title=f"Ticket | {id}"
-    )
+        ticket=ticket,
+        title=f"Ticket | {id}", ticket_log=log)
 
 @tickets_bp.route('/edit_ticket/<id>', methods=['POST', 'GET'])
 def edit_ticket(id):
@@ -163,7 +237,7 @@ def edit_ticket(id):
             status=request.form.get('status'),
             urgency=request.form.get('urgency'),
             assigned=request.form.get('assigned'),
-            log=log_input(request.form.get('log'), previous_message=ticket.log),
+            log=str(log_input(request.form.get('log')+'\n', ticket=ticket.log, entry_type=2)),
             deadline=request.form.get('deadline'),
             last_update=datetime.now()
 
@@ -191,7 +265,13 @@ def edit_ticket(id):
     form.urgency.data = ticket.urgency
     form.assigned.data = ticket.assigned
     form.deadline.data = ticket.deadline
-    form.log.data = ticket.log
+    text_log = []
+    log = eval(ticket.log)
+    for entry in log:
+        text_entry = entry[0] + entry[1]
+        text_log.append(text_entry)
+
+    form.log.data = "".join(text_log)
     #form.process()
 
     return render_template('edit.html',
@@ -232,7 +312,7 @@ def update_ticket(id):
             status=request.form.get('status'),
             assigned=request.form.get('assigned'),
             urgency=request.form.get('urgency'),
-            log=log_input(request.form.get('log')),
+            log=str(log_input(request.form.get('log'), ticket=ticket.log, entry_type=1)),
             deadline=request.form.get('deadline'),
             last_update=datetime.now()
             print(type(log))
@@ -242,7 +322,7 @@ def update_ticket(id):
             ticket.urgency = urgency
             ticket.assigned = assigned
             ticket.deadline = deadline
-            ticket.log = ticket.log + log[0]
+            ticket.log = log
             ticket.last_update = last_update
 
             db.session.commit()  # Commits all changes
