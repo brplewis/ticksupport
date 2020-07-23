@@ -15,35 +15,8 @@ tickets_bp = Blueprint(
 )
 
 
-"""def log_input(text_input, previous_message=None):
-    print(previous_message)
-    log_split = []
 
-    if previous_message != None:
-
-        if '## EDITED' in previous_message:
-            log_split.append(previous_message.split('## EDITED')[0])
-            try:
-                log_split.append(text_input.split('|', 1)[1])
-            except IndexError:
-                log_split.append(text_input)
-        else:
-
-            log_split = text_input.split('|', 1)
-            if len(log_split) == 2:
-                log_split[0] = previous_message.split('@')[0]
-            else:
-                log_split = [str(previous_message.split('|', 1)[0]), str(log_split[0])]
-
-        log_entry = f"{log_split[0]} ## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | {log_split[1]}\n"
-
-    else:
-        log_entry = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | {text_input}\n"
-
-
-    return log_entry"""
-
-def log_input(text_input, ticket=None, entry_type=0):
+def log_input(text_input, ticket=None, entry_type=0, log_id=None):
     # except a text input and create a time stamp and user # NOTE
     # make a tuple of the two and either append it onto a list
     # Or replace the edited entry with new edit and updated time stamp
@@ -62,59 +35,26 @@ def log_input(text_input, ticket=None, entry_type=0):
         full_entry = [time_stamp, text_input + '\n']
 
     elif entry_type == 2:
-        # If entry type is an edit
         ticket_log = eval(ticket)
 
-        original_log = []
+        log_id = int(log_id)
 
-        # Split text into lines
-        all_messages = []
+        ticket_log[log_id][1] = text_input
 
+        if '## EDITED' in ticket_log[log_id][0]:
+            original_timestamp = ticket_log[log_id][0].split('## EDITED')[0]
+            new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
+        else:
+            original_timestamp = ticket_log[log_id][0].split('|')[0]
+            new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
 
-        all_lines = text_input.split('\n')
-
-        # Split out all messages only
-        for line in all_lines:
-            try:
-                all_messages.append(line.split('|')[1])
-            except IndexError:
-                pass
-
-        # Get message only
-        for log in ticket_log:
-            original_log.append(log[1])
-
-        edits = []
-
-        # Find edits and save location
-        for i in range(len(original_log)):
-            if original_log[i].lstrip() != all_messages[i].lstrip():
-                print(original_log[i])
-                print(all_messages[i])
-                edits.append(i)
-
-
-        for i in edits:
-            ticket_log[i][1] = all_messages[i]
-            if '## EDITED' in ticket_log[i][0]:
-                original_timestamp = ticket_log[i][0].split('## EDITED')[0]
-                new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
-            else:
-                original_timestamp = ticket_log[i][0].split('|')[0]
-                new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
-
-            ticket_log[i][0] = original_timestamp + new_timestamp
+        ticket_log[log_id][0] = original_timestamp + new_timestamp
 
         return ticket_log
-
 
     ticket_log.append(full_entry)
 
     return ticket_log
-
-
-
-
 
 
 @tickets_bp.route('/', methods=['POST', 'GET'])
@@ -183,7 +123,10 @@ def dashboard():
 
 @tickets_bp.route('/add', methods=['POST', 'GET'])
 def add():
+
+    client_list=[(client.id, client.client) for client in clients.query.all()]
     form = forms.AddTicket()
+    form.client.choices = client_list
     if request.method == 'POST':
         if form.validate_on_submit():
             new_ticket = support_ticket(
@@ -218,16 +161,18 @@ def show_ticket():
     log = eval(ticket.log)
     return render_template(
         'show_tickets.html',
-        ticket=ticket,
+        ticket=ticket, id=id,
         title=f"Ticket | {id}", ticket_log=log)
 
 @tickets_bp.route('/edit_ticket/<id>', methods=['POST', 'GET'])
 def edit_ticket(id):
 
     ticket = support_ticket.query.filter_by(id=id).first()
-    print(ticket)
 
-    form = forms.AddTicket()
+    client_list=[(client.id, client.client) for client in clients.query.all()]
+    form = forms.EditTicket()
+    form.client.choices = client_list
+
     if request.method == 'POST':
         if form.validate_on_submit():
             client=request.form.get('client'),
@@ -237,7 +182,6 @@ def edit_ticket(id):
             status=request.form.get('status'),
             urgency=request.form.get('urgency'),
             assigned=request.form.get('assigned'),
-            log=str(log_input(request.form.get('log')+'\n', ticket=ticket.log, entry_type=2)),
             deadline=request.form.get('deadline'),
             last_update=datetime.now()
 
@@ -250,7 +194,6 @@ def edit_ticket(id):
             ticket.urgency = urgency
             ticket.assigned = assigned
             ticket.deadline = deadline
-            ticket.log = log
             ticket.last_update = last_update
 
             db.session.commit()  # Commits all changes
@@ -268,14 +211,44 @@ def edit_ticket(id):
     text_log = []
     log = eval(ticket.log)
     for entry in log:
-        text_entry = entry[0] + entry[1]
-        text_log.append(text_entry)
-
-    form.log.data = "".join(text_log)
-    #form.process()
+        text_log.append(entry[1])
 
     return render_template('edit.html',
-                            title="Edit Ticket", form=form, id=id, client_choice=ticket.client)
+                            title="Edit Ticket", form=form, id=id, client_choice=ticket.client, ticket_log=log)
+
+@tickets_bp.route('/edit_log/<id>_<log_id>', methods=['POST', 'GET'])
+@tickets_bp.route('/show_ticket/edit_log/<id>_<log_id>', methods=['POST', 'GET'])
+def edit_log(id, log_id):
+    form = forms.EditLog()
+    ticket = support_ticket.query.filter_by(id=id).first()
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            log=str(log_input(request.form.get('log'), ticket=ticket.log, entry_type=2, log_id=log_id)),
+            last_update=datetime.now()
+
+
+
+            ticket.log = log
+            ticket.last_update = last_update
+
+            db.session.commit()  # Commits all changes
+
+            return redirect(f"/show_ticket/?ticket={ticket.id}")
+
+
+    log = eval(ticket.log)
+
+    log_to_edit = log[int(log_id)]
+
+    form.log.data = log_to_edit[1]
+
+
+    return render_template(
+        'edit_log.html',
+        ticket=ticket, id=id,
+        title=f"Ticket | {id}", log_to_edit=log_to_edit, form=form, ticket_log=log, log_id=log_id)
+
 
 
 
