@@ -1,11 +1,16 @@
 
 from flask import Flask, render_template, request, redirect, url_for, Blueprint, make_response
+from flask_login import current_user, login_required
 from flask import current_app as app
 from .. import forms
+from .. import auth
 from datetime import datetime, date
-from ..models import db, support_ticket, clients
+from ..models import db, support_ticket, clients, User
+from flask_login import logout_user
+from .. import login_manager
 
-USER = "Bob"
+USER_ID = None
+USER = None
 
 # Blueprint Configuration
 tickets_bp = Blueprint(
@@ -14,6 +19,26 @@ tickets_bp = Blueprint(
     static_folder='static'
 )
 
+
+"""@app.context_processor
+def insert_user():
+    if USER_ID is None:
+        pass
+    else:
+        user = User.query.get(USER_ID)
+        return dict(user=user.name)
+
+@app.context_processor
+def if_admin():
+    if USER_ID is None:
+        pass
+    else:
+        user = User.query.get(USER_ID)
+        if user.account_type == 'admin':
+            return dict(admin=True)
+        else:
+            return dict(admin=False)
+"""
 
 
 def log_input(text_input, ticket=None, entry_type=0, log_id=None):
@@ -58,6 +83,7 @@ def log_input(text_input, ticket=None, entry_type=0, log_id=None):
 
 
 @tickets_bp.route('/', methods=['POST', 'GET'])
+@login_required
 def dashboard():
 
     if request.method == 'POST':
@@ -77,9 +103,6 @@ def dashboard():
                                     clients=clients.query.all(), title="Ticket Support", header=f"All", show_status="All", show_assigned="All",
                                    description="Web interface for support tickets",  show_clients=client_select, now=date.today())
 
-        print("assigned:  " + assigned +'|')
-        print("status:  " + status+'|')
-        print("client:  " + client_select+'|')
 
         if assigned == 'All':
             filter_code+= 1
@@ -89,8 +112,6 @@ def dashboard():
 
         if client_select == 'All Clients':
             filter_code+= 5
-
-        print(filter_code)
 
 
         if filter_code == 1:
@@ -112,7 +133,7 @@ def dashboard():
 
         print(search_filter)
 
-        return render_template('dashboard.html', all_tickets=search_filter,  clients=clients.query.all(),  show_clients=client_select,
+        return render_template('dashboard.html', user=USER, all_tickets=search_filter,  clients=clients.query.all(),  show_clients=client_select,
                                    title="Ticket Support", now=date.today(),
                                    description="Web interface for support tickets", header=f"{assigned} : {status}", show_status=f"{status}", show_assigned=f"{assigned}")
 
@@ -122,6 +143,7 @@ def dashboard():
                            description="Web interface for support tickets", header='All Open', show_clients='All Clients', show_status="Open", show_assigned="All")
 
 @tickets_bp.route('/add', methods=['POST', 'GET'])
+@login_required
 def add():
 
     client_list=[(client.id, client.client) for client in clients.query.all()]
@@ -130,7 +152,7 @@ def add():
     if request.method == 'POST':
         if form.validate_on_submit():
             new_ticket = support_ticket(
-                client=request.form.get('client'),
+                client = dict(form.client.choices).get(form.client.data),
                 client_name=request.form.get('client_name'),
                 suite=request.form.get('suite'),
                 issue=request.form.get('issue'),
@@ -155,6 +177,7 @@ def add():
 
 
 @tickets_bp.route('/show_ticket/', methods=['POST', 'GET'])
+@login_required
 def show_ticket():
     id = request.args['ticket']
     ticket = support_ticket.query.filter_by(id=id).first()
@@ -165,6 +188,7 @@ def show_ticket():
         title=f"Ticket | {id}", ticket_log=log)
 
 @tickets_bp.route('/edit_ticket/<id>', methods=['POST', 'GET'])
+@login_required
 def edit_ticket(id):
 
     ticket = support_ticket.query.filter_by(id=id).first()
@@ -175,7 +199,8 @@ def edit_ticket(id):
 
     if request.method == 'POST':
         if form.validate_on_submit():
-            client=request.form.get('client'),
+            client = dict(form.client.choices).get(form.client.data)
+            #client=request.form.get('client'),
             client_name = request.form.get('client_name')
             suite=request.form.get('suite')
             issue=request.form.get('issue'),
@@ -218,6 +243,7 @@ def edit_ticket(id):
 
 @tickets_bp.route('/edit_log/<id>_<log_id>', methods=['POST', 'GET'])
 @tickets_bp.route('/show_ticket/edit_log/<id>_<log_id>', methods=['POST', 'GET'])
+@login_required
 def edit_log(id, log_id):
     form = forms.EditLog()
     ticket = support_ticket.query.filter_by(id=id).first()
@@ -253,6 +279,7 @@ def edit_log(id, log_id):
 
 
 @tickets_bp.route('/add_client', methods=['POST', 'GET'])
+@login_required
 def add_client():
     form = forms.AddClient()
     if request.method == 'POST':
@@ -272,6 +299,7 @@ def add_client():
 
 
 @tickets_bp.route('/update_ticket/<id>', methods=['POST', 'GET'])
+@login_required
 def update_ticket(id):
 
     ticket = support_ticket.query.filter_by(id=id).first()
@@ -310,3 +338,10 @@ def update_ticket(id):
 
     return render_template('update.html',
                             title=f"Ticket {ticket.id}", form=form, id=id, client_choice=ticket.client, ticket=ticket)
+
+@tickets_bp.route("/logout")
+@login_required
+def logout():
+    """User log-out logic."""
+    logout_user()
+    return redirect(url_for('auth_bp.login'))
