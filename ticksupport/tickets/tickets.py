@@ -9,9 +9,6 @@ from ..models import db, support_ticket, clients, User
 from flask_login import logout_user
 from .. import login_manager
 
-USER_ID = None
-USER = None
-
 # Blueprint Configuration
 tickets_bp = Blueprint(
     'tickets_bp', __name__,
@@ -20,25 +17,29 @@ tickets_bp = Blueprint(
 )
 
 
-"""@app.context_processor
+print(auth.USER_ID)
+
+@app.context_processor
 def insert_user():
-    if USER_ID is None:
-        pass
+    if auth.USER_ID == None:
+        return dict(user='No User')
     else:
-        user = User.query.get(USER_ID)
+        id = int(auth.USER_ID)
+        user = User.query.get(id)
         return dict(user=user.name)
+
 
 @app.context_processor
 def if_admin():
-    if USER_ID is None:
-        pass
+    if auth.USER_ID == None:
+        return dict(admin=False)
     else:
-        user = User.query.get(USER_ID)
+        user = User.query.get(auth.USER_ID)
         if user.account_type == 'admin':
             return dict(admin=True)
         else:
             return dict(admin=False)
-"""
+
 
 
 def log_input(text_input, ticket=None, entry_type=0, log_id=None):
@@ -50,13 +51,13 @@ def log_input(text_input, ticket=None, entry_type=0, log_id=None):
     if entry_type == 0:
         # New log
         ticket_log = []
-        time_stamp = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
+        time_stamp = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{auth.USER} | "
         full_entry = [time_stamp, text_input + '\n']
 
     elif entry_type == 1:
         # If entry is an update
         ticket_log = eval(ticket)
-        time_stamp = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
+        time_stamp = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{auth.USER} | "
         full_entry = [time_stamp, text_input + '\n']
 
     elif entry_type == 2:
@@ -68,10 +69,10 @@ def log_input(text_input, ticket=None, entry_type=0, log_id=None):
 
         if '## EDITED' in ticket_log[log_id][0]:
             original_timestamp = ticket_log[log_id][0].split('## EDITED')[0]
-            new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
+            new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{auth.USER} | "
         else:
             original_timestamp = ticket_log[log_id][0].split('|')[0]
-            new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{USER} | "
+            new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{auth.USER} | "
 
         ticket_log[log_id][0] = original_timestamp + new_timestamp
 
@@ -86,17 +87,33 @@ def log_input(text_input, ticket=None, entry_type=0, log_id=None):
 @login_required
 def dashboard():
 
+    client_list = [(0, 'All Clients')]
+    for client in clients.query.all():
+        client_list.append((client.id, client.client))
+
+    assigned_list = [(0, 'All Users')]
+    for assigned in User.query.all():
+        assigned_list.append((assigned.id, assigned.name))
+
+    form = forms.DashboardSearch()
+    form.client.choices = client_list
+    form.assigned.choices = assigned_list
+
+
+
     if request.method == 'POST':
 
         if request.form.get('search'):
             return redirect(f"/show_ticket/{request.form.get('search')}")
 
-        assigned = request.form.get('show_assigned')
-        status = request.form.get('show_status')
-        client_select = request.form.get("show_clients")
+        assigned = dict(form.assigned.choices).get(form.assigned.data)
+        status = request.form.get('status')
+        client_select = dict(form.client.choices).get(form.client.data)
         urgency_filter = ""
         filter_code = 0
         search_filter = ""
+
+        form.client.default = client_select
 
         if assigned == 'All' and status == 'All' and client_select == 'All Clients':
             return render_template('dashboard.html',all_tickets=support_ticket.query.order_by(support_ticket.deadline.asc()).order_by(support_ticket.urgency.asc()).all(),
@@ -104,7 +121,7 @@ def dashboard():
                                    description="Web interface for support tickets",  show_clients=client_select, now=date.today())
 
 
-        if assigned == 'All':
+        if assigned == 'All Users':
             filter_code+= 1
 
         if status == 'All':
@@ -131,15 +148,13 @@ def dashboard():
         elif filter_code == 0:
             search_filter = support_ticket.query.filter_by(client=client_select, assigned=assigned, status=status).order_by(support_ticket.deadline.asc()).order_by(support_ticket.urgency.asc()).all()
 
-        print(search_filter)
-
-        return render_template('dashboard.html', user=USER, all_tickets=search_filter,  clients=clients.query.all(),  show_clients=client_select,
-                                   title="Ticket Support", now=date.today(),
+        return render_template('dashboard.html', all_tickets=search_filter,  clients=clients.query.all(),  show_clients=client_select,
+                                   title="Ticket Support", now=date.today(), form=form,
                                    description="Web interface for support tickets", header=f"{assigned} : {status}", show_status=f"{status}", show_assigned=f"{assigned}")
 
 
     return render_template('dashboard.html',all_tickets=support_ticket.query.filter_by(status='Open').order_by(support_ticket.deadline.asc()).order_by(support_ticket.urgency.asc()).all(),
-                           clients=clients.query.all(), title="Ticket Support", now=date.today(),
+                           title="Ticket Support", now=date.today(), form=form,
                            description="Web interface for support tickets", header='All Open', show_clients='All Clients', show_status="Open", show_assigned="All")
 
 @tickets_bp.route('/add', methods=['POST', 'GET'])

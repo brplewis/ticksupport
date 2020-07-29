@@ -7,6 +7,15 @@ from wtforms.validators import DataRequired, Length, Email, EqualTo ,Optional
 from .models import db, support_ticket, clients
 
 
+class DashboardSearch(FlaskForm):
+    client = SelectField('Client', [DataRequired()], coerce=int)
+    assigned = SelectField('Assigned', [DataRequired()], coerce=int)
+    status = SelectField('Status', [DataRequired()],
+                        choices=[('Open', 'Open'),
+                                 ('Closed', 'Closed'),
+                                 ('Awaiting Action', 'Awaiting Action')])
+    submit = SubmitField('Update')
+
 
 class AddTicket(FlaskForm):
 
@@ -22,10 +31,7 @@ class AddTicket(FlaskForm):
                         choices=[('Open', 'Open'),
                                  ('Closed', 'Closed'),
                                  ('Awaiting Action', 'Awaiting Action')])
-    assigned = SelectField('Assign', [DataRequired()],
-                        choices=[('Bob', 'Bob'),
-                                 ('Toby', 'Toby'),
-                                 ('Beth', 'Beth')])
+    assigned = SelectField('Assigned', [DataRequired()], coerce=int)
     deadline = DateField('Deadline', [
         DataRequired()], format='%Y-%m-%d')
     urgency = SelectField('Urgency', [DataRequired()],
@@ -46,10 +52,7 @@ class EditTicket(FlaskForm):
                         choices=[('Open', 'Open'),
                                  ('Closed', 'Closed'),
                                  ('Awaiting Action', 'Awaiting Action')])
-    assigned = SelectField('Assign', [DataRequired()],
-                        choices=[('Bob', 'Bob'),
-                                 ('Toby', 'Toby'),
-                                 ('Beth', 'Beth')])
+    assigned = SelectField('Assigned', [DataRequired()], coerce=int)
     deadline = DateField('Deadline', [
         DataRequired()], format='%Y-%m-%d')
     urgency = SelectField('Urgency', [DataRequired()],

@@ -11,65 +11,13 @@
         </form>
         <form action="/" method="post">
 
-          <select  type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" name="show_clients" id="show_clients">
-            {% if show_clients== 'All Clients' %}
-              <option value="All Clients"> {{show_clients}}</option>
-              {% for client in clients %}
-              {% print client %}
-                <option value="{{client}}">{{client}}</option>
-              {% endfor %}
-            {% else %}
-              <option value={{show_clients}}>{{show_clients}}</option>
-              <option value='All Clients'>All Clients</option>
-            {% for client in clients %}
-              <option value="{{client}}">{{client}}</option>
-            {% endfor %}
+          <div class="form-field">{{ form.client(value='All Clients')}}
+        {{ form.status }}
+        {{ form.assigned }}
 
-            {% endif %}
-          </select>
+          {{ form.csrf_token }}
+          {{ form.submit }} </div>
 
-
-          <select  type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" name="show_status" id="show_status">
-            {% if show_status == 'All' %}
-              <option value="All">Show All</option>
-              <option value="Open">Show Open</option>
-              <option value="Closed">Show Closed</option>
-            {% elif show_status == 'Open' %}
-              <option value="Open">Show Open</option>
-              <option value="Closed">Show Closed</option>
-              <option value="All">Show All</option>
-            {% elif show_status == 'Closed' %}
-                <option value="Closed">Show Closed</option>
-                <option value="All">Show All</option>
-                <option value="Open">Show Open</option>
-            {% endif %}
-          </select>
-
-          <select  type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" name="show_assigned" id="show_assigned">
-            {% if show_assigned == 'All' %}
-              <option value="All">All Users</option>
-              <option value="Bob">Bob</option>
-              <option value="Toby">Toby</option>
-              <option value="Beth">Beth</option>
-            {% elif show_assigned == 'Bob' %}
-              <option value="Bob">Bob</option>
-              <option value="Toby">Toby</option>
-              <option value="Beth">Beth</option>
-              <option value="All">All Users</option>
-            {% elif show_assigned == 'Toby' %}
-              <option value="Toby">Toby</option>
-              <option value="Beth">Beth</option>
-              <option value="All">All Users</option>
-              <option value="Bob">Bob</option>
-            {% elif show_assigned == 'Beth' %}
-                <option value="Beth">Beth</option>
-                <option value="All">All Users</option>
-                <option value="Bob">Bob</option>
-                <option value="Toby">Toby</option>
-            {% endif %}
-          </select>
-
-          <button type="submit" class="btn btn-sm btn-outline-secondary" name="updateBtn" value="send">Update</button>
         </form>
       </div>
     </div>

@@ -7,6 +7,8 @@ from flask_login import LoginManager
 # Globally accessible libraries
 db = SQLAlchemy()
 login_manager = LoginManager()
+USER_ID = None
+USER = None
 #r = FlaskRedis()
 
 def create_app():

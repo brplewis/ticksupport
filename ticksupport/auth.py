@@ -4,7 +4,11 @@ from flask_login import login_required, logout_user, current_user, login_user
 from .forms import LoginForm, SignupForm
 from .models import db, User
 from . import login_manager
-from .tickets.tickets import USER_ID
+#from .tickets.tickets import USER_ID
+
+USER_ID = None
+USER = None
+
 
 # Blueprint Configuration
 auth_bp = Blueprint(
@@ -67,8 +71,12 @@ def signup():
 def load_user(user_id):
     """Check if user is logged-in on every page load."""
     if user_id is not None:
+        global USER_ID
+        global USER
         USER_ID = user_id
-        return User.query.get(user_id)
+        user_object = User.query.get(user_id)
+        USER = user_object.name
+        return user_object
     return None
 
 
