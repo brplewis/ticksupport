@@ -6,8 +6,8 @@
     <h1 class="h2">View Ticket</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
       <div class="btn-group mr-2">
-        <form action="/edit_ticket/{{ticket.id}}" method="post">
-          <button type="submit" class="btn btn-sm btn-outline-secondary" name="updateBtn" value="send">Edit</button>
+        <form action="/edit_ticket/{{id}}" method="get">
+          <button type="submit" class="btn btn-sm btn-outline-secondary" name="editBtn" value="send">Edit</button>
         </form>
         <form action="/update_ticket/{{ticket.id}}" method="post">
         <button type="submit" class="btn btn-sm btn-outline-secondary" name="updateBtn" value="send">Update</button>

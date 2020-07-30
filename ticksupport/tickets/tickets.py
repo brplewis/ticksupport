@@ -162,8 +162,10 @@ def dashboard():
 def add():
 
     client_list=[(client.id, client.client) for client in clients.query.all()]
+    assigned_list=[(user.id, user.name) for user in User.query.all()]
     form = forms.AddTicket()
     form.client.choices = client_list
+    form.assigned.choices = assigned_list
     if request.method == 'POST':
         if form.validate_on_submit():
             new_ticket = support_ticket(
@@ -172,7 +174,7 @@ def add():
                 suite=request.form.get('suite'),
                 issue=request.form.get('issue'),
                 status=request.form.get('status'),
-                assigned=request.form.get('assigned'),
+                assigned=dict(form.assigned.choices).get(form.assigned.data),
                 log=str(log_input(request.form.get('log'), entry_type=0)),
                 deadline=request.form.get('deadline'),
                 created=datetime.now(),
@@ -207,10 +209,12 @@ def show_ticket():
 def edit_ticket(id):
 
     ticket = support_ticket.query.filter_by(id=id).first()
-
+    print(ticket.client)
     client_list=[(client.id, client.client) for client in clients.query.all()]
+    assigned_list=[(user.id, user.name) for user in User.query.all()]
     form = forms.EditTicket()
     form.client.choices = client_list
+    form.assigned.choices = assigned_list
 
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -221,7 +225,7 @@ def edit_ticket(id):
             issue=request.form.get('issue'),
             status=request.form.get('status'),
             urgency=request.form.get('urgency'),
-            assigned=request.form.get('assigned'),
+            assigned=dict(form.assigned.choices).get(form.assigned.data),
             deadline=request.form.get('deadline'),
             last_update=datetime.now()
 
@@ -240,7 +244,7 @@ def edit_ticket(id):
 
             return redirect(f"/show_ticket/?ticket={ticket.id}")
 
-    form.client.data = ticket.client
+    form.client.default = ticket.client
     form.client_name.data = ticket.client_name
     form.suite.data = ticket.suite
     form.issue.data = ticket.issue
@@ -254,7 +258,7 @@ def edit_ticket(id):
         text_log.append(entry[1])
 
     return render_template('edit.html',
-                            title="Edit Ticket", form=form, id=id, client_choice=ticket.client, ticket_log=log)
+                            title="Edit Ticket", form=form, id=id, ticket_log=log)
 
 @tickets_bp.route('/edit_log/<id>_<log_id>', methods=['POST', 'GET'])
 @tickets_bp.route('/show_ticket/edit_log/<id>_<log_id>', methods=['POST', 'GET'])

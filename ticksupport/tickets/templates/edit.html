@@ -14,7 +14,7 @@
   <form method="POST" action="/edit_ticket/{{id}}">
     <div class="row">
       <div class="col-sm-4">
-            <div class="form-field">{{ form.client.label }} {{ form.client }}
+            <div class="form-field">{{ form.client.label }} {{ form.client(default=id) }}
               {% if form.client.errors %}
               <ul class="errors">
               	{% for error in form.client.errors %}
@@ -135,10 +135,6 @@
       </tr>
       </thead>
       <tbody>
-        <tr>
-        <td>Log:</td>
-        <td></td>
-        </tr>
 
         {% for message in ticket_log %}
         <tr>
