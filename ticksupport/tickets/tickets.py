@@ -169,7 +169,8 @@ def add():
     if request.method == 'POST':
         if form.validate_on_submit():
             new_ticket = support_ticket(
-                client = dict(form.client.choices).get(form.client.data),
+                #client = dict(form.client.choices).get(form.client.data),
+                client = str((request.form.get('client'), dict(form.client.choices).get(form.client.data))),
                 client_name=request.form.get('client_name'),
                 suite=request.form.get('suite'),
                 issue=request.form.get('issue'),
@@ -199,9 +200,10 @@ def show_ticket():
     id = request.args['ticket']
     ticket = support_ticket.query.filter_by(id=id).first()
     log = eval(ticket.log)
+    client = eval(ticket.client)
     return render_template(
         'show_tickets.html',
-        ticket=ticket, id=id,
+        ticket=ticket, id=id, client=client[1]
         title=f"Ticket | {id}", ticket_log=log)
 
 @tickets_bp.route('/edit_ticket/<id>', methods=['POST', 'GET'])
@@ -209,10 +211,10 @@ def show_ticket():
 def edit_ticket(id):
 
     ticket = support_ticket.query.filter_by(id=id).first()
-    print(ticket.client)
     client_list=[(client.id, client.client) for client in clients.query.all()]
     assigned_list=[(user.id, user.name) for user in User.query.all()]
-    form = forms.EditTicket()
+    client_id = eval(ticket.client)[0]
+    form = forms.EditTicket(client=client_id)
     form.client.choices = client_list
     form.assigned.choices = assigned_list
 
@@ -244,7 +246,8 @@ def edit_ticket(id):
 
             return redirect(f"/show_ticket/?ticket={ticket.id}")
 
-    form.client.default = ticket.client
+    client_selected = (f'{id}', f'{ticket.client}')
+
     form.client_name.data = ticket.client_name
     form.suite.data = ticket.suite
     form.issue.data = ticket.issue
@@ -252,13 +255,14 @@ def edit_ticket(id):
     form.urgency.data = ticket.urgency
     form.assigned.data = ticket.assigned
     form.deadline.data = ticket.deadline
+
     text_log = []
     log = eval(ticket.log)
     for entry in log:
         text_log.append(entry[1])
 
     return render_template('edit.html',
-                            title="Edit Ticket", form=form, id=id, ticket_log=log)
+                            title="Edit Ticket", form=form, id=id, ticket_log=log, client=client_selected)
 
 @tickets_bp.route('/edit_log/<id>_<log_id>', methods=['POST', 'GET'])
 @tickets_bp.route('/show_ticket/edit_log/<id>_<log_id>', methods=['POST', 'GET'])
@@ -288,10 +292,12 @@ def edit_log(id, log_id):
 
     form.log.data = log_to_edit[1]
 
+    client = eval(ticket.client)
+
 
     return render_template(
         'edit_log.html',
-        ticket=ticket, id=id,
+        ticket=ticket, id=id, client=client[1],
         title=f"Ticket | {id}", log_to_edit=log_to_edit, form=form, ticket_log=log, log_id=log_id)
 
 
