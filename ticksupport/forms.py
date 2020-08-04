@@ -46,8 +46,7 @@ class EditTicket(FlaskForm):
     client = SelectField('Client', [DataRequired()], coerce=int)
     client_name = StringField('Client Name')
     suite = StringField('Suite / PC')
-    issue = StringField('Issue', [
-        DataRequired()])
+    issue = StringField('Issue', [DataRequired()])
     status = SelectField('Status', [DataRequired()],
                         choices=[('Open', 'Open'),
                                  ('Closed', 'Closed'),
@@ -76,12 +75,9 @@ class UpdateTicket(FlaskForm):
                         choices=[('Open', 'Open'),
                                  ('Closed', 'Closed'),
                                  ('Awaiting Action', 'Awaiting Action')])
-    assigned = SelectField('Assign', [DataRequired()],
-                        choices=[('Bob', 'Bob'),
-                                 ('Toby', 'Toby'),
-                                 ('Beth', 'Beth')])
+    assigned = SelectField('Assign', [DataRequired()], coerce=int)
     deadline = DateField('Deadline', [
-        DataRequired()], format='%Y-%m-%d')
+        DataRequired()], format='%d-%m-%Y')
     urgency = SelectField('Urgency', [DataRequired()],
                         choices=[('High', 'High'),
                                  ('Low', 'Low')])

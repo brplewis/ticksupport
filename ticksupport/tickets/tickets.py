@@ -51,13 +51,13 @@ def log_input(text_input, ticket=None, entry_type=0, log_id=None):
     if entry_type == 0:
         # New log
         ticket_log = []
-        time_stamp = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{auth.USER} | "
+        time_stamp = f"{datetime.now().strftime('%d-%m-%Y %H:%M:%S')} @{auth.USER} | "
         full_entry = [time_stamp, text_input + '\n']
 
     elif entry_type == 1:
         # If entry is an update
         ticket_log = eval(ticket)
-        time_stamp = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{auth.USER} | "
+        time_stamp = f"{datetime.now().strftime('%d-%m-%Y %H:%M:%S')} @{auth.USER} | "
         full_entry = [time_stamp, text_input + '\n']
 
     elif entry_type == 2:
@@ -69,10 +69,10 @@ def log_input(text_input, ticket=None, entry_type=0, log_id=None):
 
         if '## EDITED' in ticket_log[log_id][0]:
             original_timestamp = ticket_log[log_id][0].split('## EDITED')[0]
-            new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{auth.USER} | "
+            new_timestamp = f"## EDITED {datetime.now().strftime('%d-%m-%Y %H:%M:%S')} @{auth.USER} | "
         else:
             original_timestamp = ticket_log[log_id][0].split('|')[0]
-            new_timestamp = f"## EDITED {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} @{auth.USER} | "
+            new_timestamp = f"## EDITED {datetime.now().strftime('%d-%m-%Y %H:%M:%S')} @{auth.USER} | "
 
         ticket_log[log_id][0] = original_timestamp + new_timestamp
 
@@ -117,18 +117,33 @@ def dashboard():
 
         if assigned == 'All' and status == 'All' and client_select == 'All Clients':
             return render_template('dashboard.html',all_tickets=support_ticket.query.order_by(support_ticket.deadline.asc()).order_by(support_ticket.urgency.asc()).all(),
-                                    clients=clients.query.all(), title="Ticket Support", header=f"All", show_status="All", show_assigned="All",
+                                    clients=clients.query.all(), title="Ticket Support", header=f"All", show_status="All", show_assigned="All", eval=eval,
                                    description="Web interface for support tickets",  show_clients=client_select, now=date.today())
 
 
         if assigned == 'All Users':
             filter_code+= 1
+        else:
+            tickets = support_ticket.query.filter(support_ticket.assigned.contains(assigned)).all()
+            if len(tickets) > 0:
+                assigned = tickets[0].assigned
+            else:
+                assigned = None
+
+
 
         if status == 'All':
             filter_code+= 3
 
         if client_select == 'All Clients':
             filter_code+= 5
+        else:
+            tickets = support_ticket.query.filter(support_ticket.client.contains(client_select)).all()
+            if len(tickets) > 0:
+                client_select = tickets[0].client
+            else:
+                client_select = None
+
 
 
         if filter_code == 1:
@@ -149,12 +164,12 @@ def dashboard():
             search_filter = support_ticket.query.filter_by(client=client_select, assigned=assigned, status=status).order_by(support_ticket.deadline.asc()).order_by(support_ticket.urgency.asc()).all()
 
         return render_template('dashboard.html', all_tickets=search_filter,  clients=clients.query.all(),  show_clients=client_select,
-                                   title="Ticket Support", now=date.today(), form=form,
+                                   title="Ticket Support", now=date.today(), form=form, eval=eval,
                                    description="Web interface for support tickets", header=f"{assigned} : {status}", show_status=f"{status}", show_assigned=f"{assigned}")
 
 
     return render_template('dashboard.html',all_tickets=support_ticket.query.filter_by(status='Open').order_by(support_ticket.deadline.asc()).order_by(support_ticket.urgency.asc()).all(),
-                           title="Ticket Support", now=date.today(), form=form,
+                           title="Ticket Support", now=date.today(), form=form, eval=eval,
                            description="Web interface for support tickets", header='All Open', show_clients='All Clients', show_status="Open", show_assigned="All")
 
 @tickets_bp.route('/add', methods=['POST', 'GET'])
@@ -175,11 +190,11 @@ def add():
                 suite=request.form.get('suite'),
                 issue=request.form.get('issue'),
                 status=request.form.get('status'),
-                assigned=dict(form.assigned.choices).get(form.assigned.data),
+                assigned=str((request.form.get('assigned'), dict(form.assigned.choices).get(form.assigned.data))),
                 log=str(log_input(request.form.get('log'), entry_type=0)),
                 deadline=request.form.get('deadline'),
-                created=datetime.now(),
-                last_update=datetime.now(),
+                created=datetime.now().strftime('%d-%m-%Y %H:%M:%S'),
+                last_update=datetime.now().strftime('%d-%m-%Y %H:%M:%S'),
                 urgency=request.form.get('urgency'),
                 created_by='Bob' #Replace with user_name varible after user function added
 
@@ -201,9 +216,10 @@ def show_ticket():
     ticket = support_ticket.query.filter_by(id=id).first()
     log = eval(ticket.log)
     client = eval(ticket.client)
+    assigned = eval(ticket.assigned)
     return render_template(
         'show_tickets.html',
-        ticket=ticket, id=id, client=client[1]
+        ticket=ticket, id=id, client=client[1], assigned=assigned[1],
         title=f"Ticket | {id}", ticket_log=log)
 
 @tickets_bp.route('/edit_ticket/<id>', methods=['POST', 'GET'])
@@ -214,7 +230,8 @@ def edit_ticket(id):
     client_list=[(client.id, client.client) for client in clients.query.all()]
     assigned_list=[(user.id, user.name) for user in User.query.all()]
     client_id = eval(ticket.client)[0]
-    form = forms.EditTicket(client=client_id)
+    assigned_id = eval(ticket.assigned)[0]
+    form = forms.EditTicket(client=client_id, assigned=assigned_id)
     form.client.choices = client_list
     form.assigned.choices = assigned_list
 
@@ -229,7 +246,7 @@ def edit_ticket(id):
             urgency=request.form.get('urgency'),
             assigned=dict(form.assigned.choices).get(form.assigned.data),
             deadline=request.form.get('deadline'),
-            last_update=datetime.now()
+            last_update=datetime.now().strftime('%d-%m-%Y %H:%M:%S')
 
 
             ticket.client = client
@@ -274,33 +291,27 @@ def edit_log(id, log_id):
     if request.method == 'POST':
         if form.validate_on_submit():
             log=str(log_input(request.form.get('log'), ticket=ticket.log, entry_type=2, log_id=log_id)),
-            last_update=datetime.now()
-
-
+            last_update=datetime.now().strftime('%d-%m-%Y %H:%M:%S')
 
             ticket.log = log
             ticket.last_update = last_update
-
             db.session.commit()  # Commits all changes
 
             return redirect(f"/show_ticket/?ticket={ticket.id}")
 
 
     log = eval(ticket.log)
-
     log_to_edit = log[int(log_id)]
-
     form.log.data = log_to_edit[1]
 
-    client = eval(ticket.client)
+    client = eval(ticket.client)[1]
+    assigned = eval(ticket.assigned)[1]
 
 
     return render_template(
         'edit_log.html',
-        ticket=ticket, id=id, client=client[1],
+        ticket=ticket, id=id, client=client, assigned=assigned,
         title=f"Ticket | {id}", log_to_edit=log_to_edit, form=form, ticket_log=log, log_id=log_id)
-
-
 
 
 @tickets_bp.route('/add_client', methods=['POST', 'GET'])
@@ -328,20 +339,19 @@ def add_client():
 def update_ticket(id):
 
     ticket = support_ticket.query.filter_by(id=id).first()
-    print(ticket)
+    assigned_list=[(user.id, user.name) for user in User.query.all()]
+    assigned_id = eval(ticket.assigned)[0]
+    form = forms.UpdateTicket(assigned=assigned_id)
+    form.assigned.choices = assigned_list
 
-    form = forms.UpdateTicket()
     if request.method == 'POST':
-        print("POSTED")
         if form.validate_on_submit():
-            print("SUBMITTED")
             status=request.form.get('status'),
-            assigned=request.form.get('assigned'),
+            assigned= dict(form.assigned.choices).get(form.assigned.data),
             urgency=request.form.get('urgency'),
             log=str(log_input(request.form.get('log'), ticket=ticket.log, entry_type=1)),
             deadline=request.form.get('deadline'),
-            last_update=datetime.now()
-            print(type(log))
+            last_update=datetime.now().strftime('%d-%m-%Y %H:%M:%S')
 
 
             ticket.status = status
@@ -357,7 +367,6 @@ def update_ticket(id):
 
     form.status.data = ticket.status
     form.urgency.data = ticket.urgency
-    form.assigned.data = ticket.assigned
     form.deadline.data = ticket.deadline
 
 

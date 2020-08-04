@@ -46,12 +46,14 @@
         {% for ticket in all_tickets %}
           <tr>
             <td> <a href="show_ticket/?ticket={{ticket.id}}"> {{ ticket.id }} </a> </td>
-            <td> {{ ticket.client }} </td>
+            {% set client_value = eval(ticket.client)[1] %}
+            <td> {{ client_value }} </td>
             <td> {{ ticket.client_name }} </td>
             <td> {{ ticket.suite }}</td>
             <td> {{ ticket.issue }} </td>
             <td> {{ ticket.status }} </td>
-            <td> {{ ticket.assigned }} </td>
+            {% set assigned = eval(ticket.assigned)[1] %}
+            <td> {{ assigned }} </td>
             <td> {{ ticket.urgency }} </td>
             {% if ticket.deadline < now and ticket.status == 'Open' %}
               <td style="color:white; background-color:red; opacity:0.6;"> {{ ticket.deadline }}</td>

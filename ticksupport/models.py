@@ -118,14 +118,14 @@ class support_ticket(db.Model):
     )
 
     created = db.Column(
-        db.DateTime,
+        db.String(20),
         index=False,
         unique=False,
         nullable=False
     )
 
     last_update = db.Column(
-        db.DateTime,
+        db.String(20),
         index=False,
         unique=False,
         nullable=False
