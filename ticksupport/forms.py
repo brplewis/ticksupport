@@ -76,8 +76,7 @@ class UpdateTicket(FlaskForm):
                                  ('Closed', 'Closed'),
                                  ('Awaiting Action', 'Awaiting Action')])
     assigned = SelectField('Assign', [DataRequired()], coerce=int)
-    deadline = DateField('Deadline', [
-        DataRequired()], format='%d-%m-%Y')
+    deadline = DateField('Deadline', format='%Y-%m-%d')
     urgency = SelectField('Urgency', [DataRequired()],
                         choices=[('High', 'High'),
                                  ('Low', 'Low')])

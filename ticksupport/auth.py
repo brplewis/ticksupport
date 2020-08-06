@@ -52,7 +52,7 @@ def signup():
                 name=form.name.data,
                 email=form.email.data,
             )
-            user.account_type = 'user'
+            user.account_type = 'pend'
             user.set_password(form.password.data)
             db.session.add(user)
             db.session.commit()  # Create new user

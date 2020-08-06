@@ -40,6 +40,26 @@ def if_admin():
         else:
             return dict(admin=False)
 
+@app.context_processor
+def user_type():
+    if auth.USER_ID == None:
+        return dict(user_type=None)
+    else:
+        user = User.query.get(auth.USER_ID)
+
+        return dict(user_type=user.account_type)
+
+
+
+def check_user():
+    user = User.query.get(auth.USER_ID)
+    if user.account_type == 'pend':
+        return True
+
+def check_admin():
+    user = User.query.get(auth.USER_ID)
+    if user.account_type != 'admin':
+        return False
 
 
 def log_input(text_input, ticket=None, entry_type=0, log_id=None):
@@ -86,6 +106,8 @@ def log_input(text_input, ticket=None, entry_type=0, log_id=None):
 @tickets_bp.route('/', methods=['POST', 'GET'])
 @login_required
 def dashboard():
+    if check_user():
+        return redirect(url_for('tickets_bp.pending'))
 
     client_list = [(0, 'All Clients')]
     for client in clients.query.all():
@@ -175,6 +197,9 @@ def dashboard():
 @tickets_bp.route('/add', methods=['POST', 'GET'])
 @login_required
 def add():
+    if check_user():
+        return redirect(url_for('tickets_bp.pending'))
+
 
     client_list=[(client.id, client.client) for client in clients.query.all()]
     assigned_list=[(user.id, user.name) for user in User.query.all()]
@@ -212,6 +237,10 @@ def add():
 @tickets_bp.route('/show_ticket/', methods=['POST', 'GET'])
 @login_required
 def show_ticket():
+
+    if check_user():
+        return redirect(url_for('tickets_bp.pending'))
+
     id = request.args['ticket']
     ticket = support_ticket.query.filter_by(id=id).first()
     log = eval(ticket.log)
@@ -226,6 +255,9 @@ def show_ticket():
 @login_required
 def edit_ticket(id):
 
+    if check_user():
+        return redirect(url_for('tickets_bp.pending'))
+
     ticket = support_ticket.query.filter_by(id=id).first()
     client_list=[(client.id, client.client) for client in clients.query.all()]
     assigned_list=[(user.id, user.name) for user in User.query.all()]
@@ -237,14 +269,14 @@ def edit_ticket(id):
 
     if request.method == 'POST':
         if form.validate_on_submit():
-            client = dict(form.client.choices).get(form.client.data)
+            client = str((request.form.get('client'), dict(form.client.choices).get(form.client.data))),
             #client=request.form.get('client'),
             client_name = request.form.get('client_name')
             suite=request.form.get('suite')
             issue=request.form.get('issue'),
             status=request.form.get('status'),
             urgency=request.form.get('urgency'),
-            assigned=dict(form.assigned.choices).get(form.assigned.data),
+            assigned= str((request.form.get('assigned'), dict(form.assigned.choices).get(form.assigned.data))),
             deadline=request.form.get('deadline'),
             last_update=datetime.now().strftime('%d-%m-%Y %H:%M:%S')
 
@@ -285,6 +317,10 @@ def edit_ticket(id):
 @tickets_bp.route('/show_ticket/edit_log/<id>_<log_id>', methods=['POST', 'GET'])
 @login_required
 def edit_log(id, log_id):
+
+    if check_user():
+        return redirect(url_for('tickets_bp.pending'))
+
     form = forms.EditLog()
     ticket = support_ticket.query.filter_by(id=id).first()
 
@@ -317,6 +353,10 @@ def edit_log(id, log_id):
 @tickets_bp.route('/add_client', methods=['POST', 'GET'])
 @login_required
 def add_client():
+
+    if check_user():
+        return redirect(url_for('tickets_bp.pending'))
+
     form = forms.AddClient()
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -338,6 +378,9 @@ def add_client():
 @login_required
 def update_ticket(id):
 
+    if check_user():
+        return redirect(url_for('tickets_bp.pending'))
+
     ticket = support_ticket.query.filter_by(id=id).first()
     assigned_list=[(user.id, user.name) for user in User.query.all()]
     assigned_id = eval(ticket.assigned)[0]
@@ -347,7 +390,7 @@ def update_ticket(id):
     if request.method == 'POST':
         if form.validate_on_submit():
             status=request.form.get('status'),
-            assigned= dict(form.assigned.choices).get(form.assigned.data),
+            assigned= str((request.form.get('assigned'), dict(form.assigned.choices).get(form.assigned.data))),
             urgency=request.form.get('urgency'),
             log=str(log_input(request.form.get('log'), ticket=ticket.log, entry_type=1)),
             deadline=request.form.get('deadline'),
@@ -372,6 +415,28 @@ def update_ticket(id):
 
     return render_template('update.html',
                             title=f"Ticket {ticket.id}", form=form, id=id, client_choice=ticket.client, ticket=ticket)
+
+
+@tickets_bp.route('/manage_users/', methods=['POST', 'GET'])
+@login_required
+def manage_users():
+    if check_user():
+        return redirect(url_for('tickets_bp.pending'))
+
+    if check_admin():
+        return redirect(url_for('tickets_bp.not_admin'))
+
+    return render_template('manage_users.html', user_accounts=User.query.all())
+
+@tickets_bp.route('/pending', methods=['POST', 'GET'])
+def pending():
+    return render_template('pending.html')
+
+@tickets_bp.route('/access_denied', methods=['POST', 'GET'])
+def not_admin():
+    return render_template('not_admin.html')
+
+
 
 @tickets_bp.route("/logout")
 @login_required
